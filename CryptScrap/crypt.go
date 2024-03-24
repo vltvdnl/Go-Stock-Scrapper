@@ -1,37 +1,41 @@
 package cryptscrap
-import(
-	"fmt"
+
+import (
 	"log"
 
 	"github.com/gocolly/colly/v2"
 )
-type Crypto struct{
-	Rank string
-	Name string
-	Symb string
-	Price string
+
+type Crypto struct {
+	Rank          string
+	Name          string
+	Symb          string
+	Price         string
 	HourChangePer string
-	DayChangePer string
+	DayChangePer  string
 	WeekChangePer string
 }
 
-func AllCrypts() []Crypto{
+func AllCrypts() []Crypto {
 	coins := []Crypto{}
 
 	col := colly.NewCollector()
 
-	col.OnError(func(_ *colly.Response, err error){
+	col.OnError(func(_ *colly.Response, err error) {
 		log.Println("Error:", err)
 	})
 
-	col.OnRequest(func (r *colly.Request){
-		fmt.Println("Visiting", r.URL)
+	col.OnRequest(func(r *colly.Request) {
+		log.Println("Visiting", r.URL)
 	})
 
-	col.OnHTML("tbody tr", func(e *colly.HTMLElement){
+	col.OnHTML("tbody tr", func(e *colly.HTMLElement) {
 		coin := Crypto{}
 
 		coin.Rank = e.ChildText(".cmc-table__cell--sort-by__rank")
+		if coin.Rank == "" {
+			return
+		}
 		coin.Name = e.ChildText(".cmc-table__cell--sort-by__name")
 		coin.Symb = e.ChildText(".cmc-table__cell--sort-by__symbol")
 		coin.Price = e.ChildText(".cmc-table__cell--sort-by__price")
@@ -41,13 +45,14 @@ func AllCrypts() []Crypto{
 		coins = append(coins, coin)
 	})
 	col.Visit("https://coinmarketcap.com/all/views/all")
+	// log.Println(coins)
 	return coins
 }
 
-func RequestCoin(name_symb string) Crypto{
+func RequestCoin(name_symb string) Crypto {
 	coins := AllCrypts()
-	for _, coin := range coins{
-		if coin.Name == name_symb || coin.Symb == name_symb{
+	for _, coin := range coins {
+		if coin.Name == name_symb || coin.Symb == name_symb {
 			return coin
 		}
 	}

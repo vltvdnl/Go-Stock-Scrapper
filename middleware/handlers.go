@@ -7,14 +7,16 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-
-	cryptscrap "github.com/vltvdnl/Go-Stock-Scrapper.git/CryptScrap"
-	stockscrap "github.com/vltvdnl/Go-Stock-Scrapper.git/StockScrap"
+	"github.com/vltvdnl/Go-Stock-Scrapper.git/storage"
 )
 
-func GetAllStock(w http.ResponseWriter, r *http.Request) {
+func GetAllStock(w http.ResponseWriter, r *http.Request) { //
 	w.Header().Set("Content-Type", "application/json")
-	stocks := stockscrap.AllStock()
+	stocks, err := storage.DB_GetAllStock()
+	if err != nil {
+		fmt.Println("Unable to load stocks form db") // need logger
+		return
+	}
 	if len(stocks) == 0 {
 		log.Println("Unable to get stoks")
 	}
@@ -26,10 +28,15 @@ func GetStock(w http.ResponseWriter, r *http.Request) {
 	l := mux.Vars(r)
 	name := l["name"]
 	fmt.Println(name)
-	stock := stockscrap.RequestStock(name)
+	stock, err := storage.DB_GetSpecStock(name)
+	if err != nil {
+		w.WriteHeader(400)
+		json.NewEncoder(w).Encode("Some troubles with name (maybe you do some error)")
+		return
+	}
 	if stock.Name == "" {
 		w.WriteHeader(400)
-		json.NewEncoder(w).Encode("you")
+		json.NewEncoder(w).Encode("Fuck you")
 		return
 	}
 	json.NewEncoder(w).Encode(stock)
@@ -37,9 +44,15 @@ func GetStock(w http.ResponseWriter, r *http.Request) {
 
 func GetAllCoins(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	coins := cryptscrap.AllCrypts()
+	coins, err := storage.DB_GetAllCoins()
+	if err != nil {
+		fmt.Println("Unable to load coins from db")
+		json.NewEncoder(w).Encode("Unable to load coins from db")
+		return
+	}
 	if len(coins) == 0 {
 		log.Println("Unable to get cryptocurreny")
+		return
 	}
 	json.NewEncoder(w).Encode(coins)
 }
@@ -47,10 +60,13 @@ func GetAllCoins(w http.ResponseWriter, r *http.Request) {
 func GetCoin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	name := mux.Vars(r)
-	coin := cryptscrap.RequestCoin(name["name"])
+	coin, err := storage.DB_GetSpecCoin(name["name"])
+	if err != nil {
+		fmt.Println("Unable to load coin")
+	}
 	if coin.Name == "" {
-		w.WriteHeader(400)
-		json.NewEncoder(w).Encode("Fuck you")
+		fmt.Println("Unable to load coin from db")
+		json.NewEncoder(w).Encode("Unable to load coin from db")
 		return
 	}
 	json.NewEncoder(w).Encode(coin)
