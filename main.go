@@ -11,10 +11,10 @@ import (
 	"github.com/vltvdnl/Go-Stock-Scrapper.git/storage"
 )
 
-// потоки легли нахуй друг с другом....
+// потоки легли нахуй друг с другом... бля походу надо табы переелывать))))
 func main() {
 	go storage.DB_PutStocks(stockscrap.AllStock())
-	go storage.DB_PutCoins(cryptscrap.AllCrypts()) // just testing
+	go storage.DB_PutCoins(cryptscrap.AllCrypts())
 	r := router.Router()
 	fmt.Println("Starring server on port 8080: ...")
 	log.Fatal(http.ListenAndServe(":8080", r))

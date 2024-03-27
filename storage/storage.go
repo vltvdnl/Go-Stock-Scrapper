@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strconv"
 
 	_ "github.com/lib/pq"
 	cryptscrap "github.com/vltvdnl/Go-Stock-Scrapper.git/CryptScrap"
@@ -35,11 +36,6 @@ func CreateConnection() *sql.DB {
 
 	return db
 }
-
-// TODO:
-// 1) Download all data to db
-// 2) Get all data from db
-// 3)
 func DB_PutStocks(Stocks []stockscrap.Stock) {
 	db := CreateConnection()
 	defer db.Close()
@@ -47,12 +43,24 @@ func DB_PutStocks(Stocks []stockscrap.Stock) {
 	ON CONFLICT (symb) DO UPDATE SET price=$3, curchange=$4, perchange=$5;` // могут быть проблемы с запросом, надо смотреть ON CONFLICT (symb) DO UPDATE SET (price, curchange, perchange) VALUES($3, $4, $5)
 
 	for _, val := range Stocks {
-		_, err := db.Exec(sqlState,
+		price, err := strconv.ParseFloat(val.Price, 32)
+		if err != nil {
+			log.Fatalf("Problems with parse string to float64: %v", err)
+		}
+		curchange, err := strconv.ParseFloat(val.CurChange, 32)
+		if err != nil {
+			log.Fatalf("Problems with parsing string to float64: %v", err)
+		}
+		perchange, err := strconv.ParseFloat(val.PerChange, 32)
+		if err != nil {
+			log.Fatalf("Problems with parsig string to float64: %v", err)
+		}
+		_, err = db.Exec(sqlState,
 			val.Symb,
 			val.Name,
-			val.Price,
-			val.CurChange,
-			val.PerChange)
+			price,
+			curchange,
+			perchange)
 
 		if err != nil {
 			log.Fatalf("Unable to put data (stocks) to DB: %v", err)
@@ -63,17 +71,39 @@ func DB_PutStocks(Stocks []stockscrap.Stock) {
 func DB_PutCoins(Coins []cryptscrap.Crypto) {
 	db := CreateConnection()
 	defer db.Close()
-	sqlState := `INSERT INTO coins(rank, name, symb, price, hourchange, daychange, weekchange) VALUES($1, $2, $3, $4, $5, $6, $7)
-	ON CONFLICT (name) DO UPDATE SET price=$4, hourchange=$5, daychange=$6, weekchange=$7;`
+	sqlState := `INSERT INTO coins(rank, symb, name, price, hourchange, daychange, weekchange) VALUES($1, $2, $3, $4, $5, $6, $7)
+	ON CONFLICT (symb) DO UPDATE SET price=$4, hourchange=$5, daychange=$6, weekchange=$7;`
 	for _, val := range Coins {
-		_, err := db.Exec(sqlState,
-			val.Rank,
-			val.Name,
+		rank, err := strconv.Atoi(val.Rank)
+		if err != nil {
+			log.Fatalf("Problemst with parsing string to int: %v", err)
+		}
+		price, err := strconv.ParseFloat(val.Price, 32)
+		if err != nil {
+			log.Fatalf("Problems with parsing string to float32: %v", err)
+		}
+		hourchange, err := strconv.ParseFloat(val.HourChangePer[:len(val.HourChangePer)-1], 32)
+		if err != nil {
+			log.Fatalf("Problems with parsing string to float32: %v", err)
+		}
+		daychange, err := strconv.ParseFloat(val.DayChangePer[:len(val.DayChangePer)-1], 32)
+		if err != nil {
+			log.Fatalf("Problems with parsing string to float32: %v", err)
+		}
+		weekchange, err := strconv.ParseFloat(val.WeekChangePer[:len(val.WeekChangePer)-1], 32)
+		if err != nil {
+			log.Fatalf("Problems with parsing string to float32: %v", err)
+		}
+		p, h, d, w := float32(price), float32(hourchange), float32(daychange), float32(weekchange)
+
+		_, err = db.Exec(sqlState,
+			rank,
 			val.Symb,
-			val.Price,
-			val.HourChangePer,
-			val.DayChangePer,
-			val.WeekChangePer)
+			val.Name,
+			p,
+			h,
+			d,
+			w)
 		if err != nil {
 			log.Fatalf("Unable to put data to DB: %v", err) //
 		}

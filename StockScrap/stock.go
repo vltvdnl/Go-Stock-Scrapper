@@ -4,6 +4,7 @@ package stockscrap
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
@@ -51,10 +52,20 @@ func AllStock() []Stock {
 		perchangeXpath := fmt.Sprintf("/html/body/div[3]/div/div[1]/div[3]/div/div/div/div[3]/div[1]/section/section/div/div/div/div[1]/div/table/tbody/tr[%d]/td[5]", i)
 
 		stock.Symb = TextFromXpath(symbXpath)
+
 		stock.Name = TextFromXpath(nameXpath)
+
 		stock.Price = TextFromXpath(priceXpath)
+		stock.Price = strings.ReplaceAll(stock.Price, ",", "")
+
 		stock.CurChange = TextFromXpath(curchangeXpath)
+		if stock.CurChange == "UNCH" {
+			stock.CurChange = "0"
+		}
 		stock.PerChange = TextFromXpath(perchangeXpath)
+		if stock.PerChange == "UNCH" {
+			stock.PerChange = "0"
+		}
 
 		stocks = append(stocks, stock)
 	}
