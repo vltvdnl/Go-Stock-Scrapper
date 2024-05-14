@@ -1,25 +1,24 @@
-package stockscrap
+package webapi
 
-// TODO: too slow solution with go-rod, maybe need to return to gocolly but i dont't now how to do it))
 import (
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
 	"github.com/go-rod/rod"
 	"github.com/go-rod/rod/lib/launcher"
+	"github.com/vltvdnl/Go-Stock-Scrapper.git/internal/stock/entity"
 )
 
-type Stock struct {
-	Symb      string
-	Name      string
-	Price     string
-	CurChange string
-	PerChange string
+type StockWebAPI struct{}
+
+func New() *StockWebAPI {
+	return &StockWebAPI{}
 }
 
-func AllStock() []Stock {
-	stocks := []Stock{}
+func (w *StockWebAPI) GetStocks() ([]entity.Stock, error) {
+	stocks := make([]entity.Stock, 0, 102)
 	url := launcher.New().
 		Headless(true).
 		Devtools(false).
@@ -44,7 +43,9 @@ func AllStock() []Stock {
 		return text
 	}
 	for i := 1; i <= 101; i++ {
-		var stock Stock
+		var stock entity.Stock
+		var err error
+
 		symbXpath := fmt.Sprintf("/html/body/div[3]/div/div[1]/div[3]/div/div/div/div[3]/div[1]/section/section/div/div/div/div[1]/div/table/tbody/tr[%d]/td[1]/div/div/a", i)
 		nameXpath := fmt.Sprintf("/html/body/div[3]/div/div[1]/div[3]/div/div/div/div[3]/div[1]/section/section/div/div/div/div[1]/div/table/tbody/tr[%d]/td[2]", i)
 		priceXpath := fmt.Sprintf("/html/body/div[3]/div/div[1]/div[3]/div/div/div/div[3]/div[1]/section/section/div/div/div/div[1]/div/table/tbody/tr[%d]/td[3]", i)
@@ -52,46 +53,24 @@ func AllStock() []Stock {
 		perchangeXpath := fmt.Sprintf("/html/body/div[3]/div/div[1]/div[3]/div/div/div/div[3]/div[1]/section/section/div/div/div/div[1]/div/table/tbody/tr[%d]/td[5]", i)
 
 		stock.Symb = TextFromXpath(symbXpath)
-
 		stock.Name = TextFromXpath(nameXpath)
-
-		stock.Price = TextFromXpath(priceXpath)
-		stock.Price = strings.ReplaceAll(stock.Price, ",", "")
-
-		stock.CurChange = TextFromXpath(curchangeXpath)
-		if stock.CurChange == "UNCH" {
-			stock.CurChange = "0"
+		stock.Price, err = strconv.ParseFloat(strings.ReplaceAll(TextFromXpath(priceXpath), ",", ""), 64)
+		if err != nil {
+			return nil, fmt.Errorf("internal - stock - usecase - webapi - GetStocks: %v", err)
 		}
-		stock.PerChange = TextFromXpath(perchangeXpath)
-		if stock.PerChange == "UNCH" {
-			stock.PerChange = "0"
+
+		stock.CurChange, err = strconv.ParseFloat(TextFromXpath(curchangeXpath), 64)
+		if err != nil {
+			stock.CurChange = 0.0
+		}
+		stock.ChangeInPer, err = strconv.ParseFloat(TextFromXpath(perchangeXpath), 64)
+		if err != nil {
+			stock.ChangeInPer = 0.0
 		}
 
 		stocks = append(stocks, stock)
 	}
-	return stocks
+	log.Println("Query is complete")
+	return stocks, nil
 
-	// col := colly.NewCollector()
-
-	// col.OnError(func(_ *colly.Response, err error) {
-	// 	log.Println("Error: ", err)
-	// })
-
-	// col.OnRequest(func(r *colly.Request) {
-	// 	fmt.Println("Visiting: ", r.URL)
-	// })
-
-	// col.OnHTML("tbody tr", func(e *colly.HTMLElement) {
-	// 	stock := Stock{}
-	// 	stock.Symb = e.ChildText(".Va(m) Ta(end) Pstart(20px) Fw(600) Fz(s)")
-	// 	stock.Name = e.ChildText(".Name")
-	// 	stock.Price = e.ChildText(".Price (Intraday)")
-	// 	stock.CurChange = e.ChildText(".Change")
-	// 	stock.PerChange = e.ChildText(".% Change")
-	// 	stocks = append(stocks, stock)
-	// 	fmt.Println(stock) // отладка
-	// })
-	// col.Visit("https://finance.yahoo.com/most-active/") // done (not tested)
-	// // пиздец какой-то блять всё переделывать ...
-	// return stocks
 }
