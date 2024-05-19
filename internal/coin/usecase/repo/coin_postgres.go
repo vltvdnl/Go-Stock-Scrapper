@@ -71,3 +71,37 @@ func (r *CoinRepo) Store(ctx context.Context, c entity.Coin) error {
 	r.AVLTree.Insert(int(c.Price), c)
 	return nil
 }
+func (r *CoinRepo) FindMax(ctx context.Context) (*entity.Coin, error) {
+	sqlstatement := `SELECT 
+	name, symb, price, hourchange_per, daychange_per, weekchange_per
+	FROM coins where price = (SELECT MAX(price) FROM coins);`
+	stock := r.AVLTree.FindMax()
+	if stock == nil {
+		var s entity.Coin
+		row := r.DB.QueryRowContext(ctx, sqlstatement)
+		err := row.Scan(&s.Name, &s.Symb, &s.Price, &s.HourChangePer, &s.DayChangePer, &s.WeekChangePer)
+		if err != nil {
+			return nil, fmt.Errorf("error in FindMAX")
+		}
+		return &s, nil
+
+	}
+	return stock, nil
+}
+func (r *CoinRepo) FindMin(ctx context.Context) (*entity.Coin, error) {
+	sqlstatement := `SELECT 
+	name, symb, price, hourchange_per, daychange_per, weekchange_per
+	FROM coins where price = (SELECT MIN(price) FROM coins);`
+	stock := r.AVLTree.FindMin()
+	if stock == nil {
+		var s entity.Coin
+		row := r.DB.QueryRowContext(ctx, sqlstatement)
+		err := row.Scan(&s.Name, &s.Symb, &s.Price, &s.HourChangePer, &s.DayChangePer, &s.WeekChangePer)
+		if err != nil {
+			return nil, fmt.Errorf("error in FindMin")
+		}
+		return &s, nil
+
+	}
+	return stock, nil
+}

@@ -23,6 +23,20 @@ func (u *CoinUseCase) AllCoins(ctx context.Context) ([]entity.Coin, error) {
 	}
 	return coins, nil
 }
+func (u *CoinUseCase) MinCoin(ctx context.Context) (*entity.Coin, error) {
+	stocks, err := u.repo.FindMin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("internal - stock - usecase - StockUseCase - u.repo.FindMin: %w", err)
+	}
+	return stocks, nil
+}
+func (u *CoinUseCase) MaxCoin(ctx context.Context) (*entity.Coin, error) {
+	stocks, err := u.repo.FindMax(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("internal - stock - usecase - StockUseCase - u.repo.FindMax: %w", err)
+	}
+	return stocks, nil
+}
 
 func (u *CoinUseCase) GetCoins(ctx context.Context) error {
 	coins, err := u.webAPI.GetCoins()

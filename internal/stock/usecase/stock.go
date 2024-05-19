@@ -26,6 +26,21 @@ func (u *StockUseCase) AllStocks(ctx context.Context) ([]entity.Stock, error) {
 	}
 	return stocks, nil
 }
+
+func (u *StockUseCase) MinStock(ctx context.Context) (*entity.Stock, error) {
+	stocks, err := u.repo.FindMin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("internal - stock - usecase - StockUseCase - u.repo.FindMin: %w", err)
+	}
+	return stocks, nil
+}
+func (u *StockUseCase) MaxStock(ctx context.Context) (*entity.Stock, error) {
+	stocks, err := u.repo.FindMax(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("internal - stock - usecase - StockUseCase - u.repo.FindMax: %w", err)
+	}
+	return stocks, nil
+}
 func (u *StockUseCase) GetStocks(ctx context.Context) error {
 	stocks, err := u.webAPI.GetStocks()
 	if err != nil {

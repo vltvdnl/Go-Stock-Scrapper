@@ -61,7 +61,6 @@ func leftRotate[T any](x *Node[T]) *Node[T] {
 	return y
 }
 
-// Вставка нового узла с поддержкой generics
 func (t *AVLTree[T]) insert(n **Node[T], key int, value T) {
 	if *n == nil {
 		*n = &Node[T]{Key: key, Value: value, Height: 1}
@@ -80,7 +79,6 @@ func (t *AVLTree[T]) insert(n **Node[T], key int, value T) {
 
 	balance := getBalance(*n)
 
-	// Вращения для поддержания баланса
 	if balance > 1 && key < (*n).Left.Key {
 		*n = rightRotate(*n)
 		return
@@ -110,35 +108,35 @@ func (t *AVLTree[T]) Insert(key int, value T) {
 }
 
 // Нахождение минимального и максимального элементов
-func findMin[T any](n *Node[T]) *Node[T] {
+func findMin[T any](n *Node[T]) *T {
 	currentNode := n
 	for currentNode.Left != nil {
 		currentNode = currentNode.Left
 	}
-	return currentNode
+	return &currentNode.Value
 }
 
-// Функция обертка для удобного вызова
-func (t *AVLTree[T]) FindMin() *Node[T] {
+// Функция обертка
+func (t *AVLTree[T]) FindMin() *T {
 	if t.Root != nil {
 		return findMin(t.Root)
 	}
 	return nil // или возвращать ошибку, если дерево пустое
 }
 
-func findMax[T any](n *Node[T]) *Node[T] {
+func findMax[T any](n *Node[T]) *T {
 	currentNode := n
 	for currentNode.Right != nil {
 		currentNode = currentNode.Right
 	}
-	return currentNode
+	return &currentNode.Value
 }
 
-func (t *AVLTree[T]) FindMax() *Node[T] {
+func (t *AVLTree[T]) FindMax() *T {
 	if t.Root != nil {
 		return findMax(t.Root)
 	}
-	return nil // или возвращать кастомную ошибку
+	return nil
 }
 
 func (t *AVLTree[T]) ToSlice() []T {
